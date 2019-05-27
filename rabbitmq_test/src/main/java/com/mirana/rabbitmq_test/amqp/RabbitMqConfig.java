@@ -29,11 +29,16 @@ public class RabbitMqConfig {
      */
     @Bean
     public Queue createRabbitQueue() {
+        // 死信队列的消息转发到业务候补交换机上
+        Map<String, Object> args = new HashMap<>();
+        args.put(DEAD_LETTER_EXCHANGE_KEY, ConstantQueue.EMAIL_Exchange_DLQ);
+        args.put(DEAD_LETTER_ROUTING_KEY, ConstantQueue.EMAIL_ROUTINGKEY_DLQ);
         return QueueBuilder
                 .durable(ConstantQueue.QUEUE)// 持久化队列
 //                .nonDurable(ConstantQueue.QUEUE) // 非持久化队列，如果断开链接，队列中的数据会丢失
 //                .exclusive() // 排他队列，只对首次声明它的连接（Connection）可见，会在其连接断开的时候自动删除。
                 .autoDelete() // 断开链接，自动删除队列，数据也会丢失
+                .withArguments(args)// 当 requeue=true ,测试 Nack 或者 reject 是否会进入死信队列
                 .build();
     }
 
@@ -242,13 +247,14 @@ public class RabbitMqConfig {
         Map<String, Object> args = new HashMap<>();
         args.put(DEAD_LETTER_EXCHANGE_KEY, ConstantQueue.EMAIL_Exchange_BZ);
         args.put(DEAD_LETTER_ROUTING_KEY, ConstantQueue.EMAIL_ROUTINGKEY_BZ);
-        args.put("x-message-ttl", 15000);
+        // 设置死信队列默认 5 秒过期
+        args.put("x-message-ttl", 5 * 1000);
 
         return QueueBuilder
                 .durable(ConstantQueue.QUEUE_EMAIL_DLQ)// 持久化队列
 //                .nonDurable(ConstantQueue.QUEUE_EMAIL_DLQ) // 非持久化队列，如果断开链接，队列中的数据会丢失
 //                .exclusive() // 排他队列，只对首次声明它的连接（Connection）可见，会在其连接断开的时候自动删除。
-                .autoDelete() // 断开链接，自动删除队列，数据也会丢失
+//                .autoDelete() // 断开链接，自动删除队列，数据也会丢失
                 .withArguments(args)
                 .build();
     }
@@ -265,7 +271,7 @@ public class RabbitMqConfig {
                 .durable(ConstantQueue.QUEUE_EMAIL_BZ)// 持久化队列
 //                .nonDurable(ConstantQueue.QUEUE) // 非持久化队列，如果断开链接，队列中的数据会丢失
 //                .exclusive() // 排他队列，只对首次声明它的连接（Connection）可见，会在其连接断开的时候自动删除。
-                .autoDelete() // 断开链接，自动删除队列，数据也会丢失
+//                .autoDelete() // 断开链接，自动删除队列，数据也会丢失
                 .build();
     }
 
