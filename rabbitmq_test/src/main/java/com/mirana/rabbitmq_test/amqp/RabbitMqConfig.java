@@ -360,16 +360,11 @@ public class RabbitMqConfig {
      */
     @Bean
     public CustomExchange createDelayedExchange() {
-//        Map<String, Object> args = new HashMap<>();
-//        args.put("x-delayed-type", "direct");
-//        DirectExchange directExchange = new DirectExchange(ConstantQueue.EXCHANGE_DELAYED, true, false, args);
-//        directExchange.setDelayed(true);
-//        return directExchange;
         Map<String, Object> args = new HashMap<>();
         args.put("x-delayed-type", "direct");
         // 需要安装插件 rabbitmq_delayed_message_exchange
         // 否则报错：Channel shutdown: connection error; protocol method: #method<connection.close>(reply-code=503, reply-text=COMMAND_INVALID - invalid exchange type 'x-delayed-message', class-id=40, method-id=10)
-        return new CustomExchange(ConstantQueue.EXCHANGE_DELAYED, "x-delayed-message", true, false, args);
+        return new CustomExchange(ConstantQueue.EXCHANGE_DELAYED, "x-delayed-message", true, true, args);
     }
 
 
