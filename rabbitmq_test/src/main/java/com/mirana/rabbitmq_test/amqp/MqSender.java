@@ -84,4 +84,15 @@ public class MqSender {
     public void send2EmailDlqQueue(String msg, CorrelationData correlationData, MessagePostProcessor messagePostProcessor) {
         this.rabbitTemplate.convertAndSend(ConstantQueue.EMAIL_Exchange_DLQ, ConstantQueue.EMAIL_ROUTINGKEY_DLQ, msg, messagePostProcessor, correlationData);
     }
+
+    /**
+     * 发送消息到延时队列
+     *
+     * @param msg                  消息
+     * @param correlationData      id
+     * @param messagePostProcessor 消息处理器
+     */
+    public void send2DelayedQueue(String msg, CorrelationData correlationData, MessagePostProcessor messagePostProcessor) {
+        this.rabbitTemplate.convertAndSend(ConstantQueue.EXCHANGE_DELAYED, ConstantQueue.ROUTINGKEY_DELAYED, msg, messagePostProcessor, correlationData);
+    }
 }

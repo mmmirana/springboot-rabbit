@@ -198,4 +198,75 @@ public class AmqpController {
 
         return "成功发送到死信队列 " + msgNumber + " 条消息： " + msg + ", 延时：" + randomExpiration + " 秒";
     }
+
+
+    /**
+     * 发送消息到延时队列
+     * 1、下载插件 rabbitmq_delayed_message_exchange：https://dl.bintray.com/rabbitmq/community-plugins/3.7.x/rabbitmq_delayed_message_exchange/rabbitmq_delayed_message_exchange-20171201-3.7.x.zip
+     * <p>
+     * 2、解压到rabbitmq_server-3.7.7\plugins目录下,文件: rabbitmq_delayed_message_exchange-20171201-3.7.x.ez
+     * <p>
+     * 3、rabbitmq安装插件 rabbitmq-plugins enable rabbitmq_delayed_message_exchange
+     * <p>
+     * 4、关闭rabbitmq服务，net stop rabbitmq
+     * <p>
+     * 5、删除 C:\Users\${username}\.erlang.cookie、C:\Users\${username}\AppData\Roaming\RabbitMQ\enabled_plugins
+     * 然后启用插件：
+     * C:\WINDOWS\system32>rabbitmq-plugins enable rabbitmq_delayed_message_exchange
+     * Enabling plugins on node rabbit@mirana:
+     * rabbitmq_delayed_message_exchange
+     * The following plugins have been configured:
+     * rabbitmq_delayed_message_exchange
+     * Applying plugin configuration to rabbit@mirana...
+     * The following plugins have been enabled:
+     * rabbitmq_delayed_message_exchange
+     * <p>
+     * set 1 plugins.
+     * Offline change; changes will take effect at broker restart.
+     * <p>
+     * 6、启动Rabbitmq服务，net start rabbitmq
+     * <p>
+     * 7、声明延时队列和延时交换机CustomExchange
+     * <p>
+     * 8、启动应用并访问地址发送延迟消息
+     * curl http://localhost:8080/send2DelayedQueue
+     * % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+     * Dload  Upload   Total   Spent    Left  Speed
+     * 100    62  100    62    0     0    984      0 --:--:-- --:--:-- --:--:--   984
+     * ==> 成功发送到延迟队列 1 条消息： 2019-05-28 11:05:48
+     * <p>
+     * 2019-05-28 11:05:48.037 : send2DelayedQueue: 2019-05-28 11:05:48
+     * 2019-05-28 11:05:48.090 : 消息被退回: 2019-05-28 11:05:48, 312 NO_ROUTE exchange_delayed routingkey_delayed
+     * 2019-05-28 11:05:48.092 : 消息发送成功,id: af8cc6b7c8ea488eb8e21468ca7202bd
+     * 2019-05-28 11:05:53.142 : queue_delayed Receiver : 2019-05-28 11:05:48
+     *
+     * @param msgNumber 消息数量
+     * @return 消息发送结果
+     * <p>
+     * <p>
+     * <p>
+     * TODO 这里的消息会被退回
+     */
+    @GetMapping("send2DelayedQueue")
+    public String send2DelayedQueue(@RequestParam(required = false, defaultValue = "1") Integer msgNumber) {
+        String msg = DateUtils.format();
+        log.info("send2DelayedQueue: {}", msg);
+
+        MessagePostProcessor messagePostProcessor = message -> {
+            MessageProperties messageProperties = message.getMessageProperties();
+            messageProperties.setContentEncoding("utf-8");
+            // 消息持久化
+            messageProperties.setDeliveryMode(MessageDeliveryMode.PERSISTENT);
+            // 毫秒为单位，指定此消息的延时时长
+            messageProperties.setDelay(5 * 1000);
+            return message;
+        };
+
+        for (int i = 0; i < msgNumber; i++) {
+            CorrelationData correlationData = new CorrelationData(UUID.randomUUID().toString().replace("-", ""));
+            sender.send2DelayedQueue(msg, correlationData, messagePostProcessor);
+        }
+
+        return "成功发送到延迟队列 " + msgNumber + " 条消息： " + msg;
+    }
 }

@@ -138,6 +138,7 @@ public class MqReceiver {
 
     /**
      * 测试死信队列
+     * 这里注释掉，过一段时间，死信队列的消息会进入 业务处理的候补邮件队列
      *
      * @param msg
      * @param channel
@@ -167,23 +168,23 @@ public class MqReceiver {
      * 2019-05-27 14:54:58.252  send2EmailDlqQueue: 2019-05-27 14:54:58
      * 2019-05-27 14:54:58.464  消息发送成功,id: randomExpiration: 6,e4577d77004543fc83a2b60e209f0671
      * 2019-05-27 14:55:03.364  quque_email_bz Receiver : 2019-05-27 14:54:58
-     *
+     * <p>
      * 2019-05-27 14:55:05.131  send2EmailDlqQueue: 2019-05-27 14:55:05
      * 2019-05-27 14:55:05.169  消息发送成功,id: randomExpiration: 2,2582554077af4d00b3eae99aaced1ad6
      * 2019-05-27 14:55:07.144  quque_email_bz Receiver : 2019-05-27 14:55:05
-     *
+     * <p>
      * 2019-05-27 14:55:23.660  send2EmailDlqQueue: 2019-05-27 14:55:23
      * 2019-05-27 14:55:23.723  消息发送成功,id: randomExpiration: 5,2ce31299f9f046a7a630142f79f618be
      * 2019-05-27 14:55:28.670  quque_email_bz Receiver : 2019-05-27 14:55:23
-     *
+     * <p>
      * 2019-05-27 14:55:31.496  send2EmailDlqQueue: 2019-05-27 14:55:31
      * 2019-05-27 14:55:31.541  消息发送成功,id: randomExpiration: 3,3cb8393cf8a745289f8edb2c7004dff7
      * 2019-05-27 14:55:34.522  quque_email_bz Receiver : 2019-05-27 14:55:31
-     *
+     * <p>
      * 2019-05-27 14:55:37.775  send2EmailDlqQueue: 2019-05-27 14:55:37
      * 2019-05-27 14:55:37.864  消息发送成功,id: randomExpiration: 6,f3e7522b2fd245aaab7d7bd75882ad68
      * 2019-05-27 14:55:42.798  quque_email_bz Receiver : 2019-05-27 14:55:37
-     *
+     * <p>
      * 2019-05-27 14:55:48.985  send2EmailDlqQueue: 2019-05-27 14:55:48
      * 2019-05-27 14:55:49.119  消息发送成功,id: randomExpiration: 4,1fd22879cd8442e1af7116b1379fa1b6
      * 2019-05-27 14:55:52.997  quque_email_bz Receiver : 2019-05-27 14:55:48
@@ -204,5 +205,17 @@ public class MqReceiver {
 
     }
 
+
+    @RabbitHandler
+    @RabbitListener(queues = ConstantQueue.QUEUE_DELAYED)
+    public void processDelayed(Message msg, Channel channel) throws IOException {
+        // 测试延时队列
+        log.info("{} Receiver : {}", ConstantQueue.QUEUE_DELAYED, msg.getPayload().toString());
+
+        // 应答
+        Long deliveryTag = (Long) msg.getHeaders().get(AmqpHeaders.DELIVERY_TAG);
+        channel.basicReject(deliveryTag, false);
+
+    }
 
 }

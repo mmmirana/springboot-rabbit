@@ -2,6 +2,9 @@ package com.mirana.rabbitmq_test.amqp;
 
 
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,6 +13,9 @@ import java.util.Map;
 
 @Configuration
 public class RabbitMqConfig {
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     /**
      * 死信队列 交换机标识符
@@ -332,4 +338,50 @@ public class RabbitMqConfig {
                 .with(ConstantQueue.EMAIL_ROUTINGKEY_BZ);
     }
 
+    /**
+     * 创建延迟队列
+     *
+     * @return
+     */
+    @Bean
+    public Queue createDelayedQueue() {
+        return QueueBuilder
+                .durable(ConstantQueue.QUEUE_DELAYED)// 持久化队列
+//                .nonDurable(ConstantQueue.QUEUE) // 非持久化队列，如果断开链接，队列中的数据会丢失
+//                .exclusive() // 排他队列，只对首次声明它的连接（Connection）可见，会在其连接断开的时候自动删除。
+                .autoDelete() // 断开链接，自动删除队列，数据也会丢失
+                .build();
+    }
+
+    /**
+     * 创建延时交换机
+     *
+     * @return
+     */
+    @Bean
+    public CustomExchange createDelayedExchange() {
+//        Map<String, Object> args = new HashMap<>();
+//        args.put("x-delayed-type", "direct");
+//        DirectExchange directExchange = new DirectExchange(ConstantQueue.EXCHANGE_DELAYED, true, false, args);
+//        directExchange.setDelayed(true);
+//        return directExchange;
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-delayed-type", "direct");
+        // 需要安装插件 rabbitmq_delayed_message_exchange
+        // 否则报错：Channel shutdown: connection error; protocol method: #method<connection.close>(reply-code=503, reply-text=COMMAND_INVALID - invalid exchange type 'x-delayed-message', class-id=40, method-id=10)
+        return new CustomExchange(ConstantQueue.EXCHANGE_DELAYED, "x-delayed-message", true, false, args);
+    }
+
+
+    /**
+     * 延迟队列与延迟交换机绑定
+     */
+    @Bean
+    public Binding bindingDelayed() {
+        return BindingBuilder
+                .bind(createDelayedQueue())
+                .to(createDelayedExchange())
+                .with(ConstantQueue.ROUTINGKEY_DELAYED)
+                .noargs();
+    }
 }

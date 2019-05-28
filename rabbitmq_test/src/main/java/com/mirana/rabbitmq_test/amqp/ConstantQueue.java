@@ -62,4 +62,9 @@ public interface ConstantQueue {
     String EMAIL_ROUTINGKEY_BZ = "rk.email.bz";
 
 
+    // 延时队列
+    String QUEUE_DELAYED = "queue_delayed";
+    String EXCHANGE_DELAYED = "exchange_delayed";
+    String ROUTINGKEY_DELAYED = "routingkey_delayed";
+
 }
